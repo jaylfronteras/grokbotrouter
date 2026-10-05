@@ -4,9 +4,11 @@
   "private": true,
   "type": "module",
   "description": "Standalone external inference router for official Grok Bot",
-  "engines": {"node": ">=20"},
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "test": "node --test tests/*.test.mjs",
+    "test": "node --test tests",
     "check": "npm test",
     "router:start": "node scripts/official-host-router.mjs",
     "router:patch": "node scripts/patch-official-host.mjs",
