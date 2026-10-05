@@ -1,0 +1,2 @@
+import test from "node:test";import assert from "node:assert/strict";import {readFile} from "node:fs/promises";
+test("official router is loopback, OpenAI-compatible, audited and fail-closed",async()=>{const s=await readFile(new URL("../scripts/official-host-router.mjs",import.meta.url),"utf8");assert.match(s,/127\.0\.0\.1/);assert.match(s,/\/chat\/completions/);assert.match(s,/inference_start/);assert.match(s,/inference_complete/);assert.match(s,/toolCallPart/);assert.match(s,/application\/connect\+json/);assert.doesNotMatch(s,/cursor.*fallback/i)});
