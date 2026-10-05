@@ -1,0 +1,53 @@
+name: Windows installer
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/**
+      - installer/**
+      - tests/**
+      - package.json
+      - .github/workflows/windows-installer.yml
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Test
+        run: npm test
+      - name: Stage standalone payload
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force installer/payload | Out-Null
+          Copy-Item scripts/official-host-router.mjs installer/payload/
+          Copy-Item scripts/patch-official-host.mjs installer/payload/
+          Copy-Item scripts/restore-official-host.mjs installer/payload/
+          Copy-Item installer/configure.cmd installer/payload/
+          Copy-Item installer/restore.cmd installer/payload/
+          Copy-Item (Get-Command node).Source installer/payload/node.exe
+      - name: Build unsigned installer
+        shell: pwsh
+        run: |
+          choco install nsis -y --no-progress
+          & "C:\Program Files (x86)\NSIS\makensis.exe" installer/official-router.nsi
+      - name: Smoke install
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "installer/GrokBot_External_Inference_Router_Setup.exe" -ArgumentList "/S" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Installer failed" }
+          $root = Join-Path $env:LOCALAPPDATA "Programs\GrokBot External Inference Router"
+          @("node.exe","official-host-router.mjs","patch-official-host.mjs","restore-official-host.mjs","configure.cmd") | ForEach-Object {
+            if (-not (Test-Path (Join-Path $root $_))) { throw "Missing installed payload: $_" }
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grokbotrouter-windows-installer
+          path: installer/GrokBot_External_Inference_Router_Setup.exe
+          if-no-files-found: error
+          retention-days: 14
