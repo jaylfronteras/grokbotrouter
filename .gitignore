@@ -1,0 +1,5 @@
+router.env.cmd
+.env
+.grokbot-router-audit.jsonl
+installer/payload/
+*.log
